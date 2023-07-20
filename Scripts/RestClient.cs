@@ -104,6 +104,12 @@ namespace UnityRestClient
             return new Result<TResponse>(result.ResponseCode, result.IsHttpError, result.IsNetworkError, result.StringContent, result.Error);
         }
 
+        public static async Task<Result<TResponse>> Post<TForm, TResponse>(string url, string data, string authorizationToken, Dictionary<string, string> headers)
+        {
+            Result result = await Post(url, data, authorizationToken, headers);
+            return new Result<TResponse>(result.ResponseCode, result.IsHttpError, result.IsNetworkError, result.StringContent, result.Error);
+        }
+
         public static async Task<Result<TResponse>> Post<TResponse>(string url, string authorizationToken)
         {
             Result result = await Post(url, "{}", authorizationToken);
@@ -302,12 +308,12 @@ namespace UnityRestClient
             return await Post(url, JsonConvert.SerializeObject(data), null);
         }
 
-        public static async Task<Result> Post<TForm>(string url, TForm data, string authorizationToken)
+        public static async Task<Result> Post<TForm>(string url, TForm data, string authorizationToken, Dictionary<string, string> headers = null)
         {
-            return await Post(url, JsonConvert.SerializeObject(data), authorizationToken);
+            return await Post(url, JsonConvert.SerializeObject(data), authorizationToken, headers);
         }
 
-        public static async Task<Result> Post(string url, string data, string authorizationToken)
+        public static async Task<Result> Post(string url, string data, string authorizationToken, Dictionary<string, string> headers = null)
         {
 #if DEBUG_REST_CLIENT || UNITY_EDITOR
             Guid id = Guid.NewGuid();
@@ -332,6 +338,13 @@ namespace UnityRestClient
 #endif
                     webRequest.SetRequestHeader("Content-Type", "application/json");
                     webRequest.SetRequestHeader("Authorization", "Bearer " + authorizationToken);
+                }
+                if (headers != null)
+                {
+                    foreach (string key in headers.Keys)
+                    {
+                        webRequest.SetRequestHeader(key, headers[key]);
+                    }
                 }
                 webRequest.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(data.ToCharArray()));
                 webRequest.uploadHandler.contentType = "application/json";
